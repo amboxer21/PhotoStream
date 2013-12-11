@@ -1,0 +1,25 @@
+abstract: 'Nix desktop app to download your entire photo collection'
+author: -Anthony Guevara
+build_requires:
+  Test::More: 0.94
+
+configure_requires:
+   ExtUtils::MakeMaker: 0
+   dynamic_config: 1
+   license: perl
+
+meta-spec:
+   version: 0.5
+   name: PhotoStream
+   no_index:
+
+directory:
+   - t
+   - inc
+   - FB_Photos
+requires:
+   Tk: 804.031
+   Facebook::Graph: 1.0600   
+
+resources:
+version: 0.5
