@@ -1,0 +1,38 @@
+#!/bin/bash
+
+FILE="/tmp/out.$$"
+GREP="/bin/grep"
+
+if [[ $EUID -ne 0 ]]
+   then
+   echo -e "\nThis script must be run as root.\n" 1>&2
+   exit 1
+   fi
+
+Touch=( 'Album_ID_list' 'albums' 'Photostream_photos' 'photo_urls' );
+
+for i in "${Touch[@]}"
+   do
+   touch $i && chmod a+rwx $i
+   done
+
+Deps=( 'xorg-dev' 'libudev-dev' 'libssl-dev' 'libxss1' 'libcanberra-gtk-module' );
+
+for i in "${Deps[@]}" 
+   do
+   if [[ $( dpkg -s $i | grep "install\|ok\|installed" ) ]] 
+      then 
+      echo -e "\n$i is installed.\n"; 
+         else 
+         echo -e "\n$i is not installed.\nForce installing."; apt-get --force-yes --yes install $i; 
+         fi
+   done
+
+mkdir -p "$(pwd)/PhotoStream";
+
+if ARCH=$(uname -a | egrep -o "i686" | awk '!x[$0]++') 
+   then
+   sudo ln -sf /lib/i386-linux-gnu/libudev.so.1 /lib/i386-linux-gnu/libudev.so.0;
+      else
+      sudo ln -sf /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64-linux-gnu/libudev.so.0;
+      fi
