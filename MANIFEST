@@ -1,0 +1,8 @@
+Makefile.PL
+MANIFEST
+README
+Changes
+Parser
+temp
+PhotoStreamUI.pm
+META.yml
