@@ -1,0 +1,68 @@
+#------------------------------------------------PREREQUISITES-----------------------------------------------#
+1) You need Google Chrome installed. PhotoStream does not support Firefox.
+	Installing chrome from a deb package =>
+	$ sudo dpkg -i google-chrome-stable_current_i386.deb
+
+I've included a copy of Chrome.
+
+2) You must be signed into facebook before you run PhotoStream.
+
+3) you must manually install 2 Perl modules via Cpan.
+	*Buntu =>
+	$ sudo su
+	$ cpan 
+	$ reload cpan
+	$ install Tk
+	$ install Facebook::Graph
+	$ reload cpan
+	$ exit
+
+4) Run perl Makefile.PL and your set. The way to run the program is to launch the UI from the command line. 
+
+Then exit the super user environment so you may go into the normal user environment due to the fact that you 
+should not run Chrome as super user. There are preventive measures put in place to prevent this in the first place. 
+Just trying to save you some time.
+
+Launch PhotoStream with =>
+	$ perl PhotoStream.pm 
+
+See USAGE at the bottom.
+
+#-------------------------------------------------DEPENDENCIES-----------------------------------------------#
+
+# Library prerequesites. If they are not present, PhotoStream will not work.
+sudo apt-get install libssl-dev
+# libudev-dev is so yo may launch Google Chrome from the browser.
+sudo apt-get install libudev-dev
+# xorg-dev is a PerlTk dependency. Without it, PerlTk will not install properly or in worse cases, not at all.
+sudo apt-get install xorg-dev 
+
+# For a 32 bit system. If Google chrome will not launch from the command line then you must install libudev-dev 
+# as stated above then link the shared object libraries with the following command.
+sudo ln -sf /lib/i386-linux-gnu/libudev.so.1 /lib/i386-linux-gnu/libudev.so.0
+
+# SO linker command for a 64 bit system.
+sudo ln -sf /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64-linux-gnu/libudev.so.0 
+
+# If you receive this error 
+# Please check the validity of the index file by comparing it to more
+# than one CPAN mirror. I'll continue but problems seem likely to
+# happen.
+
+# The solution is to remove both
+ /root/.cpan/sources/modules/02packages.details.txt.gz ( AND ) /root/.cpan/sources/modules/03modlist.data.gz
+# and reload cpan. Then reinstall whatever module you were previously installing.
+
+# Gtk-Message: Failed to load module "canberra-gtk-module" 
+# The following command handles this error.
+sudo apt-get install libcanberra-gtk-module:i386
+
+#-----------------------------------------------------USAGE----------------------------------------------------#
+
+# Using PhotoStream is easy. Once it is launched, you simply click on the "Get Code" button. This will open up a  
+# new tab in yor browser and will reirect your addrss bar to a final URL with a query string inside. You must copy 
+# the access token, everything after code= is what we need. Copy and paste this access code into PhotoStreams Text 
+# Entry widget and click the "Download" button. PhotoStream will take care of the rest. Enjoy.
+# 
+# 
+#  QUESTIONS, comments, etc. => Anthony Guevara amboxer21@gmail.com
