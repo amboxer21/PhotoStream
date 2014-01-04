@@ -1,0 +1,6 @@
+#!/bin/bash
+
+cat albums~ \
+   | grep -o '\(\"name\":\"[A-Za-z0-9 ]*\"\)' \
+   | sed -n 'g;n;p' \
+   | awk -F "\"" '{ print $4 }' > Album_Names;
