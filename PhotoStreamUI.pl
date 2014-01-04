@@ -17,7 +17,7 @@ my $Action;
 
 my $app_id		= 'APP_ID';
 my $app_secret		= 'APP_SECRET';
-my $postback_url	= 'https://peaceful-dawn-6605.herokuapp.com/oauth';
+my $postback_url	= 'POSTBACK_URL';
 
 my $fb = Facebook::Graph->new(
    desktop	=> 1,
