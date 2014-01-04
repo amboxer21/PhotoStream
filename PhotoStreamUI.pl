@@ -15,8 +15,8 @@ my $file;
 my $code;
 my $Action;
 
-my $app_id		= '231557030323853';
-my $app_secret		= '5ba33cd9b1dd078fc86bce38c2389cc4';
+my $app_id		= 'APP_ID';
+my $app_secret		= 'APP_SECRET';
 my $postback_url	= 'https://peaceful-dawn-6605.herokuapp.com/oauth';
 
 my $fb = Facebook::Graph->new(
