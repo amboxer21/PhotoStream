@@ -1,15 +1,21 @@
 package PhotoStream;
 
-use Tk;
 use strict;
+
+use Tk;
+use Tk::Photo;
 use Data::Dumper;
 use Facebook::Graph;
 
+require Tk::Checkbox;
 require Tk::Dialog;
+require Tk::Pane;
 
 my $file;
 my $code;
-my $app_id		= '231557	030323853';
+my $Action;
+
+my $app_id		= '231557030323853';
 my $app_secret		= '5ba33cd9b1dd078fc86bce38c2389cc4';
 my $postback_url	= 'https://peaceful-dawn-6605.herokuapp.com/oauth';
 
@@ -27,8 +33,7 @@ my $uri = $fb
    ->uri_as_string;
 
 my $mw = MainWindow->new;
-   #$mw->geometry("400x400");
-my $Frame = $mw -> Frame( -container => 1, -height => 5, -width => 5 );   
+   $mw->geometry("700x600");   
    $mw->title("PhotoStream");
 
 my $Menu = $mw->Menu();
@@ -40,47 +45,45 @@ my $File = $Menu->cascade( -label => 'File', -underline => 0, -tearoff => 0 );
 my $Help = $Menu->cascade( -label => 'Help', -underline => 0, -tearoff => 0 );
    $Help->command( -label => "Brief", -underline => 0, -command => \&how_to );
 
-my $CodeButton = $mw->Button( -text => "Get Code", -command => \&button_sub )->pack( );
-my $DLButton = $mw->Button( -text => "Download", -command => \&PhotoStream )->pack( );
-my $Close = $mw->Button( -text => "Close", -command => \&close )->pack( -fill => 'both' );
-my $DummyButton2 = $mw->Button( )->pack( );
+my $Pane = $mw->Scrolled( 'Pane', Name => 'Image Display',
+        -scrollbars => 'e',
+	-width => 540,
+	-height => 500, 
+	-background => "WHITE"
+	)->pack( -side => 'top', -anchor => 'ne', -padx => '8', -pady => '8', -fill => 'x', -expand => '1' ); #-fill => 'both', -expand => '1' 
 
-my $entry = $mw->Entry( -background=> 'white', -foreground => 'black', -width => 28, -show => '*', -textvariable => \$code )->pack( );
-my $Label = $mw->Label( -text => 'CODE= ')->pack( );
+my $RadioButtonAlbums = $mw->Checkbutton( -text => 'Albums', 
+				    -variable => \$Action, 
+				    #-value => 'Up', 
+				    #-command => \&options, 
+				    )->pack( -side => 'top', -anchor => 'sw', -padx => '10', -padx => '10', -after => $Pane, );
 
-   $Label->grid( -row => 5, -column => 1 );
-   $entry->grid( -row => 5, -column => 4 );
-   $DummyButton2->grid( -row => 2, -column => 1, -sticky => 'w', );
-   $Close->grid( -row => 3, -column => 1, );
-   $DLButton->grid( -row => 5, -column => 5, );
-   $CodeButton->grid( -row => 4, -column => 1, );
+my $CodeButton = $mw->Button( -text => "Get Code", -command => \&button_sub )->pack( -side => 'left', -anchor => 'sw', -pady => 4, -padx => 5 );
+my $DLButton = $mw->Button( -text => "Download", -command => \&PhotoStream )->pack( -side => 'right', -anchor => 'se', -pady => 4, -padx => 5 );
+my $Label = $mw->Label( -text => 'CODE= ')->pack( -side => 'left', -anchor => 'sw', -pady => 5 );
 
-=pod
-my $ProgressBar = $mw->ProgressBar( 
-   -side => 'center', 
-   -width => 20, 
-   -length => 200, 
-   -from => 0, 
-   -to => 100, 
-   -blocks => 10, 
-   -colors => [0, 'green', 50, 'yellow' , 80, 'red'],
-   -variable => \&PhotoStream
-   )->pack( );
-   $ProgressBar->value();
-=cut
+my $entry = $mw->Entry( -background=> 'white', 
+			-foreground => 'black', 
+			-width => 165, 
+			-show => '*', 
+			-textvariable => \$code,
+			-exportselection => '1', )->pack( -side => 'left', -anchor => 'sw', -padx => 5, -pady => 6 );
 
 sub button_sub {
    system ("/opt/google/chrome/chrome", "$uri");
-   #$code->get(0, 'end'); 
 };
 
-sub PhotoStream {
+#print "CODE = $code.\n";
+
+=pod
+sub get_albums {
 my $token_response_object = $fb->request_access_token($code);
 my $token_string = $token_response_object->token;
 my $token_expires_epoch = $token_response_object->expires;
    $ENV{'token_string'} = $token_string;
-   system ("wget https://graph.facebook.com/me/albums?access_token=$token_string -O albums && bash Parser");
+   system ("wget https://graph.facebook.com/me/albums?access_token=$token_string -O albums && bash AlbumNames");
    };
+=cut
 
 sub how_to {
 my $HowTo = <<'END_MESSAGE';
@@ -96,13 +99,80 @@ my $HowTo = <<'END_MESSAGE';
   
 END_MESSAGE
 
-my $Dialog = $mw->Dialog( -title => "How To", -text => "$HowTo" );
-   $Dialog->Show( );
+my $DialogHowTo = $mw->Dialog( -title => "How To", -text => "$HowTo" );
+   $DialogHowTo->Show( );
 };
 
-sub close {
-   exit 0;
-   #system( readarray -t array < <( pgrep -f PhotoStreamUI.pl ); for i in "${array[@]}"; do kill -9 $i; done )
+sub options {
+my $Options = <<'END_MESSAGE';
+
+Please choose the albums you want to download.
+  
+END_MESSAGE
+
+my $DialogOptions = $mw->Dialog( -title => "Error", -text => "$Options" );
+   $DialogOptions->Show( );
+};
+
+sub empty_code {
+my $EmptyCode = <<'END_MESSAGE';
+
+'Code =' cannot be empty. Click on the get code button to retrieve the code.
+  
+END_MESSAGE
+
+my $DialogEmptyCode = $mw->Dialog( -title => "Error", -text => "$EmptyCode" );
+   $DialogEmptyCode->Show( );
+};
+
+sub PhotoStream {
+if ( ! defined($Action) && defined($code) ) {
+my $token_response_object = $fb->request_access_token($code);
+my $token_string = $token_response_object->token;
+my $token_expires_epoch = $token_response_object->expires;
+   $ENV{'token_string'} = $token_string;
+   system ("wget https://graph.facebook.com/me/albums?access_token=$token_string -O albums && bash Parser2");
+   } elsif ( ! defined($Action && $code) ) {
+     &empty_code;
+     }
+
+if ( defined($Action && $code) ) {
+my $token_response_object = $fb->request_access_token($code);
+my $token_string = $token_response_object->token;
+my $token_expires_epoch = $token_response_object->expires;
+   $ENV{'token_string'} = $token_string;
+   system ("wget https://graph.facebook.com/me/albums?access_token=$token_string -O albums && bash AlbumNames");
+   #&get_albums;
+
+my @Buttons;
+
+my $DialogAlbums = $mw->Dialog( -title => "Albums", );
+#my $Show = $Dialog->Show( );
+
+open FILE, "<Album_Names", or die "Can't open file: $!";
+
+my @lines = <FILE>;
+
+my $NumberOfAlbums = scalar @lines;
+   print $NumberOfAlbums;
+
+close FILE or die "Cannot close file: $!";
+
+for (my $i = 1; $i <= $NumberOfAlbums; $i++) {
+  push (@Buttons, $DialogAlbums->Checkbutton(-text => "$lines[$i]"));
+  }
+
+foreach (@Buttons) {
+   $_->pack(-side => 'left');
+   } 
+   $DialogAlbums->Show( );
+
+my $DialogAlbums = $mw->Dialog( -title => "Albums", );
+   
+     } elsif ( defined($Action) && ! defined($code) ) {
+     &empty_code;
+     } 
+
 };
 
 MainLoop;
