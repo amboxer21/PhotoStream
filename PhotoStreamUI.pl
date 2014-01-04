@@ -15,9 +15,9 @@ my $file;
 my $code;
 my $Action;
 
-my $app_id		= '231557030323853';
-my $app_secret		= '5ba33cd9b1dd078fc86bce38c2389cc4';
-my $postback_url	= 'https://peaceful-dawn-6605.herokuapp.com/oauth';
+my $app_id		= 'APP_ID';
+my $app_secret		= 'APP_SECRET';
+my $postback_url	= 'POSTBACK_URL';
 
 my $fb = Facebook::Graph->new(
    desktop	=> 1,
@@ -65,21 +65,52 @@ my $entry = $mw->Entry( -background=> 'white',
 			-textvariable => \$code,
 			-exportselection => '1', )->pack( -side => 'left', -anchor => 'sw', -padx => 5, -pady => 6 );
 
+my $token_string;
+my $token_response_object;
+
+sub token {
+   $token_response_object = $fb->request_access_token($code);
+   $token_string = $token_response_object->token;
+   my $token_expires_epoch = $token_response_object->expires;
+      $ENV{'token_string'} = $token_string;
+};
+
 sub button_sub {
    system ("/opt/google/chrome/chrome", "$uri");
 };
 
 #print "CODE = $code.\n";
 
-=pod
 sub get_albums {
-my $token_response_object = $fb->request_access_token($code);
-my $token_string = $token_response_object->token;
-my $token_expires_epoch = $token_response_object->expires;
-   $ENV{'token_string'} = $token_string;
-   system ("wget https://graph.facebook.com/me/albums?access_token=$token_string -O albums && bash AlbumNames");
-   };
-=cut
+if ( defined($Action && $code) ) {
+   &token;
+      system ( "wget https://graph.facebook.com/me/albums?access_token=$token_string -O albums && bash AlbumNames" );
+      #&get_albums;
+
+   my @Buttons;
+   my $DialogAlbums = $mw->Dialog( -title => "Albums", );
+
+      open FILE, "<Album_Names", or die "Can't open file: $!";
+
+   my @lines = <FILE>;
+
+   my $NumberOfAlbums = scalar @lines;
+      print $NumberOfAlbums;
+      close FILE or die "Cannot close file: $!";
+
+   for ( my $i = 1; $i < $NumberOfAlbums; $i++ ) {
+      push ( @Buttons, $DialogAlbums->Checkbutton(-text => "$lines[$i]" ) );
+      }
+
+   foreach ( @Buttons ) {
+      $_->pack(-side => 'top', -anchor => 'nw' );
+      } 
+      $DialogAlbums->Show( );
+
+      } elsif ( defined($Action) && ! defined($code) ) {
+        &empty_code;
+ } 
+};
 
 sub how_to {
 my $HowTo = <<'END_MESSAGE';
@@ -123,47 +154,12 @@ my $DialogEmptyCode = $mw->Dialog( -title => "Error", -text => "$EmptyCode" );
 
 sub PhotoStream {
 if ( ! defined($Action) && defined($code) ) {
-   my $token_response_object = $fb->request_access_token($code);
-   my $token_string = $token_response_object->token;
-   my $token_expires_epoch = $token_response_object->expires;
-      $ENV{'token_string'} = $token_string;
-      system ( "wget https://graph.facebook.com/me/albums?access_token=$token_string -O albums && bash Parser2" );
+   &token; 
+      system ( "wget https://graph.facebook.com/me/albums?access_token=$token_string -O albums && bash Parser" );
       } elsif ( ! defined($Action && $code) ) {
         &empty_code;
         }
-
-if ( defined($Action && $code) ) {
-   my $token_response_object = $fb->request_access_token($code);
-   my $token_string = $token_response_object->token;
-   my $token_expires_epoch = $token_response_object->expires;
-      $ENV{'token_string'} = $token_string;
-      system ( "wget https://graph.facebook.com/me/albums?access_token=$token_string -O albums && bash AlbumNames" );
-      #&get_albums;
-
-   my @Buttons;
-   my $DialogAlbums = $mw->Dialog( -title => "Albums", );
-
-      open FILE, "<Album_Names", or die "Can't open file: $!";
-
-   my @lines = <FILE>;
-
-   my $NumberOfAlbums = scalar @lines;
-      print $NumberOfAlbums;
-      close FILE or die "Cannot close file: $!";
-
-   for ( my $i = 1; $i < $NumberOfAlbums; $i++ ) {
-      push ( @Buttons, $DialogAlbums->Checkbutton(-text => "$lines[$i]" ) );
-      }
-
-   foreach ( @Buttons ) {
-      $_->pack(-side => 'top', -anchor => 'nw' );
-      } 
-      $DialogAlbums->Show( );
-
-      } elsif ( defined($Action) && ! defined($code) ) {
-        &empty_code;
- } 
-
+	&get_albums;
 };
 
 MainLoop;
