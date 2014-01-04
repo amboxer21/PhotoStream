@@ -15,9 +15,9 @@ my $file;
 my $code;
 my $Action;
 
-my $app_id		= 'APP_ID';
-my $app_secret		= 'APP_SECRET';
-my $postback_url	= 'POSTBACK_URL';
+my $app_id		= '231557030323853';
+my $app_secret		= '5ba33cd9b1dd078fc86bce38c2389cc4';
+my $postback_url	= 'https://peaceful-dawn-6605.herokuapp.com/oauth';
 
 my $fb = Facebook::Graph->new(
    desktop	=> 1,
@@ -46,17 +46,13 @@ my $Help = $Menu->cascade( -label => 'Help', -underline => 0, -tearoff => 0 );
    $Help->command( -label => "Brief", -underline => 0, -command => \&how_to );
 
 my $Pane = $mw->Scrolled( 'Pane', Name => 'Image Display',
-        -scrollbars => 'e',
-	-width => 540,
-	-height => 500, 
-	-background => "WHITE"
-	)->pack( -side => 'top', -anchor => 'ne', -padx => '8', -pady => '8', -fill => 'x', -expand => '1' ); #-fill => 'both', -expand => '1' 
+        		  -scrollbars => 'e',
+	 		  -width => 540,
+			  -height => 500, 
+			  -background => "WHITE" )->pack( -side => 'top', -anchor => 'ne', -padx => '8', -pady => '8', -fill => 'x', -expand => '1' );
 
 my $RadioButtonAlbums = $mw->Checkbutton( -text => 'Albums', 
-				    -variable => \$Action, 
-				    #-value => 'Up', 
-				    #-command => \&options, 
-				    )->pack( -side => 'top', -anchor => 'sw', -padx => '10', -padx => '10', -after => $Pane, );
+				          -variable => \$Action, )->pack( -side => 'top', -anchor => 'sw', -padx => '10', -padx => '10', -after => $Pane, );
 
 my $CodeButton = $mw->Button( -text => "Get Code", -command => \&button_sub )->pack( -side => 'left', -anchor => 'sw', -pady => 4, -padx => 5 );
 my $DLButton = $mw->Button( -text => "Download", -command => \&PhotoStream )->pack( -side => 'right', -anchor => 'se', -pady => 4, -padx => 5 );
@@ -106,7 +102,7 @@ my $DialogHowTo = $mw->Dialog( -title => "How To", -text => "$HowTo" );
 sub options {
 my $Options = <<'END_MESSAGE';
 
-Please choose the albums you want to download.
+   Please choose the albums you want to download.
   
 END_MESSAGE
 
@@ -117,7 +113,7 @@ my $DialogOptions = $mw->Dialog( -title => "Error", -text => "$Options" );
 sub empty_code {
 my $EmptyCode = <<'END_MESSAGE';
 
-'Code =' cannot be empty. Click on the get code button to retrieve the code.
+   'Code =' cannot be empty. Click on the get code button to retrieve the code.
   
 END_MESSAGE
 
@@ -127,51 +123,46 @@ my $DialogEmptyCode = $mw->Dialog( -title => "Error", -text => "$EmptyCode" );
 
 sub PhotoStream {
 if ( ! defined($Action) && defined($code) ) {
-my $token_response_object = $fb->request_access_token($code);
-my $token_string = $token_response_object->token;
-my $token_expires_epoch = $token_response_object->expires;
-   $ENV{'token_string'} = $token_string;
-   system ("wget https://graph.facebook.com/me/albums?access_token=$token_string -O albums && bash Parser2");
-   } elsif ( ! defined($Action && $code) ) {
-     &empty_code;
-     }
+   my $token_response_object = $fb->request_access_token($code);
+   my $token_string = $token_response_object->token;
+   my $token_expires_epoch = $token_response_object->expires;
+      $ENV{'token_string'} = $token_string;
+      system ( "wget https://graph.facebook.com/me/albums?access_token=$token_string -O albums && bash Parser2" );
+      } elsif ( ! defined($Action && $code) ) {
+        &empty_code;
+        }
 
 if ( defined($Action && $code) ) {
-my $token_response_object = $fb->request_access_token($code);
-my $token_string = $token_response_object->token;
-my $token_expires_epoch = $token_response_object->expires;
-   $ENV{'token_string'} = $token_string;
-   system ("wget https://graph.facebook.com/me/albums?access_token=$token_string -O albums && bash AlbumNames");
-   #&get_albums;
+   my $token_response_object = $fb->request_access_token($code);
+   my $token_string = $token_response_object->token;
+   my $token_expires_epoch = $token_response_object->expires;
+      $ENV{'token_string'} = $token_string;
+      system ( "wget https://graph.facebook.com/me/albums?access_token=$token_string -O albums && bash AlbumNames" );
+      #&get_albums;
 
-my @Buttons;
+   my @Buttons;
+   my $DialogAlbums = $mw->Dialog( -title => "Albums", );
 
-my $DialogAlbums = $mw->Dialog( -title => "Albums", );
-#my $Show = $Dialog->Show( );
+      open FILE, "<Album_Names", or die "Can't open file: $!";
 
-open FILE, "<Album_Names", or die "Can't open file: $!";
+   my @lines = <FILE>;
 
-my @lines = <FILE>;
+   my $NumberOfAlbums = scalar @lines;
+      print $NumberOfAlbums;
+      close FILE or die "Cannot close file: $!";
 
-my $NumberOfAlbums = scalar @lines;
-   print $NumberOfAlbums;
+   for ( my $i = 1; $i < $NumberOfAlbums; $i++ ) {
+      push ( @Buttons, $DialogAlbums->Checkbutton(-text => "$lines[$i]" ) );
+      }
 
-close FILE or die "Cannot close file: $!";
+   foreach ( @Buttons ) {
+      $_->pack(-side => 'top', -anchor => 'nw' );
+      } 
+      $DialogAlbums->Show( );
 
-for (my $i = 1; $i <= $NumberOfAlbums; $i++) {
-  push (@Buttons, $DialogAlbums->Checkbutton(-text => "$lines[$i]"));
-  }
-
-foreach (@Buttons) {
-   $_->pack(-side => 'top', -anchor => 'nw' );
-   } 
-   $DialogAlbums->Show( );
-
-my $DialogAlbums = $mw->Dialog( -title => "Albums", );
-   
-     } elsif ( defined($Action) && ! defined($code) ) {
-     &empty_code;
-     } 
+      } elsif ( defined($Action) && ! defined($code) ) {
+        &empty_code;
+ } 
 
 };
 
