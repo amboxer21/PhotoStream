@@ -163,7 +163,7 @@ for (my $i = 1; $i <= $NumberOfAlbums; $i++) {
   }
 
 foreach (@Buttons) {
-   $_->pack(-side => 'left');
+   $_->pack(-side => 'top', -anchor => 'nw' );
    } 
    $DialogAlbums->Show( );
 
