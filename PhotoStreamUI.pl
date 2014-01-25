@@ -1,23 +1,26 @@
 package PhotoStream;
 
 use strict;
+#use warnings;
+#use diagnostics;
 
 use Tk;
 use Tk::Photo;
 use Data::Dumper;
 use Facebook::Graph;
 
-require Tk::Checkbox;
-require Tk::Dialog;
 require Tk::Pane;
+require Tk::Dialog;
+require Tk::Checkbox;
+require Tk::ErrorDialog;
 
 my $file;
 my $code;
 my $Action;
 
-my $app_id		= 'APP_ID';
-my $app_secret		= 'APP_SECRET';
-my $postback_url	= 'POSTBACK_URL';
+my $app_id		= '231557030323853';
+my $app_secret		= '5ba33cd9b1dd078fc86bce38c2389cc4';
+my $postback_url	= 'https://peaceful-dawn-6605.herokuapp.com/oauth';
 
 my $fb = Facebook::Graph->new(
    desktop	=> 1,
@@ -38,9 +41,13 @@ my $mw = MainWindow->new;
 
 my $Menu = $mw->Menu();
    $mw->configure( -menu => $Menu );
+   $mw->protocol( WM_DELETE_WINDOW => \&ask );
 
-my $File = $Menu->cascade( -label => 'File', -underline => 0, -tearoff => 0 );
-   #
+my $File = $Menu->cascade( -label => 'File', );
+   $File->command( -label => 'Quit', -accelerator => 'Ctrl-q', -command => sub { exit; } );
+   $File->separator;
+   
+my $DummyOpt1 = $File->command( -label => 'DummyOpt1', );
 
 my $Help = $Menu->cascade( -label => 'Help', -underline => 0, -tearoff => 0 );
    $Help->command( -label => "Brief", -underline => 0, -command => \&how_to );
@@ -54,7 +61,7 @@ my $Pane = $mw->Scrolled( 'Pane', Name => 'Image Display',
 my $RadioButtonAlbums = $mw->Checkbutton( -text => 'Albums', 
 				          -variable => \$Action, )->pack( -side => 'top', -anchor => 'sw', -padx => '10', -padx => '10', -after => $Pane, );
 
-my $CodeButton = $mw->Button( -text => "Get Code", -command => \&button_sub )->pack( -side => 'left', -anchor => 'sw', -pady => 4, -padx => 5 );
+my $CodeButton = $mw->Button( -text => "Get Code", -command => \&get_code_button )->pack( -side => 'left', -anchor => 'sw', -pady => 4, -padx => 5 );
 my $DLButton = $mw->Button( -text => "Download", -command => \&PhotoStream )->pack( -side => 'right', -anchor => 'se', -pady => 4, -padx => 5 );
 my $Label = $mw->Label( -text => 'CODE= ')->pack( -side => 'left', -anchor => 'sw', -pady => 5 );
 
@@ -68,6 +75,9 @@ my $entry = $mw->Entry( -background=> 'white',
 my $token_string;
 my $token_response_object;
 
+#######################
+## Token sub routine.##
+#######################
 sub token {
    $token_response_object = $fb->request_access_token($code);
    $token_string = $token_response_object->token;
@@ -75,43 +85,96 @@ sub token {
       $ENV{'token_string'} = $token_string;
 };
 
-sub button_sub {
+#################################
+## Get_code_button sub routine.##
+#################################
+sub get_code_button {
    system ("/opt/google/chrome/chrome", "$uri");
 };
 
-#print "CODE = $code.\n";
-
+############################
+## Get_albums sub routine.##
+############################
+my $GetAlbumsButtons;
 sub get_albums {
 if ( defined($Action && $code) ) {
    &token;
-      system ( "wget https://graph.facebook.com/me/albums?access_token=$token_string -O albums && bash AlbumNames" );
+      system ( "wget https://graph.facebook.com/me/albums?access_token=$token_string -O albums" );
+
+      open my $FILE, '<', "albums", or die "Can't open file: $!";
+
+   my @lines = <$FILE>;
+
+      open my $FileAlbumNames, '>', "Album_Names", or die "Can't open file: $!";
+      open my $FileAlbumIdList, '>', "Album_ID_list", or die "Cant open file: $!";
+
+   my $Decoded;
+foreach my $i ( @lines ) {
+   $Decoded = JSON::XS::decode_json( $i );
+ for ( @{$Decoded->{data}} ) {
+    my $KeyPair = "$_->{name} $_->{id}";
+    #my @Name = $_->{name}. "\n";
+    my @Id = $_->{id}. "\n";
+    my @answer = split(/[0-9]+$/, $KeyPair);
+    print $FileAlbumNames "@answer\n";
+    print $FileAlbumIdList "@Id";
+ }
+
+   close( $FileAlbumNames ) or die "Cannot close file: $!";
+   close( $FileAlbumIdList ) or die "Cannot close file: $!";
+
+}
       #&get_albums;
 
    my @Buttons;
-   my $DialogAlbums = $mw->Dialog( -title => "Albums", );
+   my $TlwAlbums = $mw->Toplevel;
+      $TlwAlbums->title( 'Albums' );
 
-      open FILE, "<Album_Names", or die "Can't open file: $!";
+      open $FILE, "<Album_Names", or die "Can't open file: $!";
 
-   my @lines = <FILE>;
+   @lines = <$FILE>;
 
    my $NumberOfAlbums = scalar @lines;
-      print $NumberOfAlbums;
-      close FILE or die "Cannot close file: $!";
+      print "You have $NumberOfAlbums albums.\n\n";
+      close( $FILE ) or die "Cannot close file: $!";
 
-   for ( my $i = 1; $i < $NumberOfAlbums; $i++ ) {
-      push ( @Buttons, $DialogAlbums->Checkbutton(-text => "$lines[$i]" ) );
-      }
+my $i = 0;
+my @Selected;
+foreach my $n ( @lines ) {
+   $TlwAlbums->Checkbutton( -text => "$n", 
+                     -onvalue => $n,
+   	             -offvalue => 0,
+		     -variable => \$Selected[$i], )->pack(-side => 'top', -anchor => 'nw' ); 
+   $i=$i+1;
+ }
 
-   foreach ( @Buttons ) {
-      $_->pack(-side => 'top', -anchor => 'nw' );
-      } 
-      $DialogAlbums->Show( );
+my $GetAlbumsButtons = $TlwAlbums->Button( -text => "Get Albums",
+				           -command => \&value, )->pack(  -side => 'left', -anchor => 'sw', -padx => '5', -pady => '5' ); 
+
+my $CancelButtons = $TlwAlbums->Button( -text => "Cancel",
+				        -command => , sub { print "Operation cancelled.\n"; $TlwAlbums->withdraw }, )
+					->pack(  -side => 'right', -anchor => 'se', -padx => '5', -pady => '5' ); 
+
+sub value {
+for my $x ( @Selected ) {
+   if( $x ne 0 ) { #&& $x =~ m/LINUX/ ) {
+   print "$x";
+   } #elsif ( $x == ' ' ) { print "No albums were selected.\n" }
+ } print "\n";
+};
+
+# NEED GET ALBUM HANDLER HERE.
+
+      &get_albums_button;
 
       } elsif ( defined($Action) && ! defined($code) ) {
         &empty_code;
- } 
+        } 
 };
 
+########################
+## How_to sub routine.##
+########################
 sub how_to {
 my $HowTo = <<'END_MESSAGE';
 
@@ -130,6 +193,9 @@ my $DialogHowTo = $mw->Dialog( -title => "How To", -text => "$HowTo" );
    $DialogHowTo->Show( );
 };
 
+#########################
+## Options sub_routine.##
+#########################
 sub options {
 my $Options = <<'END_MESSAGE';
 
@@ -141,6 +207,9 @@ my $DialogOptions = $mw->Dialog( -title => "Error", -text => "$Options" );
    $DialogOptions->Show( );
 };
 
+############################
+## Empty_code sub routine.##
+############################
 sub empty_code {
 my $EmptyCode = <<'END_MESSAGE';
 
@@ -152,14 +221,39 @@ my $DialogEmptyCode = $mw->Dialog( -title => "Error", -text => "$EmptyCode" );
    $DialogEmptyCode->Show( );
 };
 
+#Get albums button function needs to be built!
+############################
+## Get_albums sub routine.##
+############################
+sub get_albums_button {
+if ( defined ($GetAlbumsButtons) ) {
+   print "Get Albums Button Pressed.\n"
+ }
+};
+
+#############################
+## PhotoStream sub routine.##
+#############################
 sub PhotoStream {
 if ( ! defined($Action) && defined($code) ) {
    &token; 
-      system ( "wget https://graph.facebook.com/me/albums?access_token=$token_string -O albums && bash Parser" );
+      system ( "wget https://graph.facebook.com/me/albums?access_token=$token_string -O albums && bash Parser2" );
       } elsif ( ! defined($Action && $code) ) {
         &empty_code;
         }
 	&get_albums;
+};
+
+sub ask {
+my $Tlw = $mw->Toplevel;
+   $Tlw->title('Prompt');
+my $Label = $Tlw->Label( -text => 'Are you sure?' )->pack( -side => 'top', -pady => '15' );
+
+   $Tlw->Button( -text => "Quit", 
+		       -command => sub { exit; }, )->pack( -side => 'left', -anchor => 'sw', -padx => '5', -pady => '5' );
+
+   $Tlw->Button( -text => "Cancel",
+		       -command => sub { $Tlw->withdraw }, )->pack( -side => 'right', -anchor => 'se', -padx => '5', -pady => '5' );
 };
 
 MainLoop;
