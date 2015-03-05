@@ -237,7 +237,7 @@ if ( defined ($GetAlbumsButtons) ) {
 sub PhotoStream {
 if ( ! defined($Action) && defined($code) ) {
    &token; 
-      system ( "wget https://graph.facebook.com/me/albums?access_token=$token_string -O albums && bash Parser2" );
+      system ( "wget https://graph.facebook.com/me/albums?access_token=$token_string -O albums && bash Parser" );
       } elsif ( ! defined($Action && $code) ) {
         &empty_code;
         }
