@@ -20,7 +20,12 @@ foreach my $F ( @files ) {
 
    while (<$URLS>) {
       print $TMP "$_\n";
-      if( $_ =~ m/https/ ) { print }
+      if( my $next_urls = $_ =~ m/(next\":\"https:\\\/\\\/graph\.facebook\.com\\\/[a-z][0-9]\.[0-9]+\\\/[0-9]+\\\/[a-z]+\?access_token=[a-zA-Z0-9&=]+)/ ) { 
+	$next_urls = $1;
+	$next_urls =~ s/([\"\\]|next)//g;
+	print "$next_urls ";
+      }
+      #print $_ # tester
       }
 
    close($URLS);
