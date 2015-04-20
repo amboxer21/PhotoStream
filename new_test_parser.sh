@@ -1,6 +1,9 @@
 #!/bin/bash
 
-touch temp;
+  if [ ! -f temp  ]; then
+    touch temp;  
+  fi
+
 cat Photostream_photos~ > temp;
 
 ###### START OF SEPERATOR ######
