@@ -36,7 +36,7 @@ function final_next_parser() {
   append_to_next_urls;
 
 	for i in `cat next_urls 2>/dev/null`; do 
-		if ( `echo $i` == "END_of_FILE" ); then
+		if [[ `echo $i` == "END_of_FILE" ]]; then
 			echo -e "EOF Reached\n";
 		else
 			#wget $i -O temp;
