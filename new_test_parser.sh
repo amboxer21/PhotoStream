@@ -1,9 +1,9 @@
 #!/bin/bash
 
 touch temp;
-cat Photostream_photos > temp;
+cat Photostream_photos~ > temp;
 
-## START OF SEPERATOR
+###### START OF SEPERATOR ######
 function next_parser() {
         cat temp | egrep -o --color "next\":\"[A-Za-z0-9:\/.?_=]*&limit=25" | sed 's/\(next\":\"\)//g' | awk '{gsub(/\\/,""); print}';
 };
@@ -21,7 +21,7 @@ function source_parser() {
 function source_url() {
         source_parser > source_urls;
 }; source_url;
-## END OF SEPERATOR
+###### END OF SEPERATOR ######
 
 function append_to_next_urls() {
 	echo "END_of_FILE" >> next_urls;
@@ -39,8 +39,8 @@ function final_next_parser() {
 		if [[ `echo $i` == "END_of_FILE" ]]; then
 			echo -e "EOF Reached\n";
 		else
-			#wget $i -O temp;
-			echo -e "${i}\n";
+			wget $i -O temp;
+			#echo -e "${i}\n";
 		fi
 	done
 }; final_next_parser;
