@@ -44,6 +44,7 @@ function final_next_parser() {
 		else
 			wget $i -O temp;
 			#echo -e "${i}\n";
+      sed "s/$i//g"
 		fi
 	done
 }; final_next_parser;
