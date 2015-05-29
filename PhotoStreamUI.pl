@@ -31,7 +31,8 @@ my $fb = Facebook::Graph->new(
 
 my $uri = $fb
    ->authorize
-   ->extend_permissions(qw(offline_access read_stream publish_stream user_photos friends_photos))
+   #->extend_permissions(qw(offline_access read_stream publish_stream user_photos friends_photos))
+   ->extend_permissions(qw(read_stream user_photos))
    ->set_display('page')
    ->uri_as_string;
 
