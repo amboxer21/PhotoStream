@@ -61,19 +61,16 @@ function append_to_next_urls() {
 
 function reset() {
 	echo > temp;
-};
+}; reset;
 
 function final_next_parser() {
-  reset;
   append_to_next_urls;
 
 	for i in `cat next_urls 2>/dev/null`; do 
 		if [[ `echo $i` == "END_of_FILE" ]]; then
 			echo -e "EOF Reached\n";
 		else
-			wget $i -O temp;
-			#echo -e "${i}\n";
-      			sed "s/$i//g"
+			wget $i -O temp && sed -i "s/${i}//g" temp;
 		fi
 	done
 }; final_next_parser;
