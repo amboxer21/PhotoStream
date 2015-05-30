@@ -1,8 +1,37 @@
 #!/bin/bash
 
-  if [ ! -f temp  ]; then
-    touch temp;  
-  fi
+	if [ ! -f temp  ]; then
+		touch temp;  
+	fi
+
+cp albums albums~
+
+#Retreive album ID's.
+function get_album_ids() {
+	cat albums~ | egrep -o '\"id\":\"[0-9]*\",\"from\"' | sed 's/\(\"id\":\"\)\([0-9]*\)\(\",\".*$\)/\2/g' > Album_ID_list;
+	cp Album_Names Album_Names~;
+}; get_album_ids;
+
+# Retreive album names
+function get_album_names() {
+	cat albums~ | egrep -o '\"name\":\"[a-zA-Z0-9 ]*\"}\,\"name\":\"[a-zA-Z0-9 ]*\"' | awk '{gsub(/\"/,"")} FS=":" {print $3}'  > Album_Names;
+	cp Album_ID_list Album_ID_list~;
+}; get_album_names;
+
+readarray -t album_id_list < <(cat Album_ID_list);
+
+function grab_albums() {
+	for i in "${album_id_list[@]}"; do
+		wget "https://graph.facebook.com/$i/photos?access_token=$token_string" -O "Photostream_Album_$i" &&
+		chmod a+rwx "Photostream_Album_$i";
+		cat "Photostream_Album_$i" >> "Photostream_photos";
+	done
+
+	cp Photostream_photos Photostream_photos~; 
+}; grab_albums;
+
+# Remove unecessary files.
+find . -name "Photostream_Album_[0-9]*" -exec rm -rf {} \;
 
 cat Photostream_photos~ > temp;
 
@@ -44,7 +73,7 @@ function final_next_parser() {
 		else
 			wget $i -O temp;
 			#echo -e "${i}\n";
-      sed "s/$i//g"
+      			sed "s/$i//g"
 		fi
 	done
 }; final_next_parser;
