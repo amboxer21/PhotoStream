@@ -5,7 +5,7 @@
 	fi
 
 	# Zero out all files relevant to final next url parser.
-	for i in `echo "next_urls source_urls temp"`; do 
+	for i in `echo "next_urls source_urls temp albums albums~ Album_Names Album_Names~ Album_ID_list Album_ID_list~ Photostream_photos Photostream_photos~"`; do 
 		echo > $i;
 	done
 
@@ -51,7 +51,7 @@ function next_url() {
 }; next_url;
     
 function source_parser() {
-        cat temp | egrep --color -o "source\":\"[A-Za-z0-9.:\/_-]*_n.jpg" | sed 's/\(source\":\"\)//g' | awk '{gsub(/\\/,""); print}';
+        cat temp | egrep --color -o "source\":\"[A-Za-z0-9.:\/_-]*_n.jpg\?\_[A-Za-z0-9&=_]*" | sed 's/\(source\":\"\)//g' | awk '{gsub(/\\/,""); print}';
 };  
     
 # Source urls
@@ -60,38 +60,26 @@ function source_url() {
 }; source_url;
 ###### END OF SEPERATOR ######
 
-function append_to_next_urls() {
-	echo "END_of_FILE" >> next_urls;
-}; 
-
 function reset() {
 	echo > temp;
 }; reset;
 
 function final_next_parser() {
-  # Append the string "EOF to the end of the next_urls file. 
-  append_to_next_urls;
 
 	for i in `cat next_urls 2>/dev/null`; do 
 		# Escapes the forward slashes on each iteration of the loop to allow you to pass the variable to sed.
 		mod_string=$(echo $i | awk '{gsub(/\//, "\\/"); print}')
 
-		#if [[ $mod_string == `echo $mod_string | egrep "http.*\-used"` ]]; then 
-		#	echo -e "STING WAS ALREADY USED.\n"; 
-		#fi
-
 		if [[ ! $mod_string == `echo $mod_string | egrep "http.*\-used"` ]]; then 
-
-		#if [[ `echo $i` == "END_of_FILE" ]]; then
-		#	echo -e "EOF Reached\n";
-		#else
 			# While the current line in next_urls file is not equal to EOF
-			wget $i -O temp && sed "s/$mod_string/$mod_string-used/g";
+			wget $i -O temp && sed -i "s/$mod_string/$mod_string-used/g" next_urls;
 			# Parse next urls from temp file
 			next_url;
 			# Parse source urls from temp file
 			source_url;
-			reset
+			#reset
+		elif [[ $mod_string == `echo $mod_string | egrep "http.*\-used"` ]]; then
+			sed -i "s/$mod_string//g" next_urls;	
 		fi
 	done
 }; final_next_parser;
