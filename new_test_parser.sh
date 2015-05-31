@@ -4,6 +4,11 @@
 		touch temp;  
 	fi
 
+	# Zero out all files relevant to final next url parser.
+	for i in `echo "next_urls source_urls temp"`; do 
+		echo > $i;
+	done
+
 cp albums albums~
 
 #Retreive album ID's.
@@ -42,7 +47,7 @@ function next_parser() {
 
 # Next urls
 function next_url() { 
-        next_parser > next_urls;
+        next_parser >> next_urls;
 }; next_url;
     
 function source_parser() {
@@ -51,7 +56,7 @@ function source_parser() {
     
 # Source urls
 function source_url() {
-        source_parser > source_urls;
+        source_parser >> source_urls;
 }; source_url;
 ###### END OF SEPERATOR ######
 
@@ -64,13 +69,29 @@ function reset() {
 }; reset;
 
 function final_next_parser() {
+  # Append the string "EOF to the end of the next_urls file. 
   append_to_next_urls;
 
 	for i in `cat next_urls 2>/dev/null`; do 
-		if [[ `echo $i` == "END_of_FILE" ]]; then
-			echo -e "EOF Reached\n";
-		else
-			wget $i -O temp && sed -i "s/${i}//g" temp;
+		# Escapes the forward slashes on each iteration of the loop to allow you to pass the variable to sed.
+		mod_string=$(echo $i | awk '{gsub(/\//, "\\/"); print}')
+
+		#if [[ $mod_string == `echo $mod_string | egrep "http.*\-used"` ]]; then 
+		#	echo -e "STING WAS ALREADY USED.\n"; 
+		#fi
+
+		if [[ ! $mod_string == `echo $mod_string | egrep "http.*\-used"` ]]; then 
+
+		#if [[ `echo $i` == "END_of_FILE" ]]; then
+		#	echo -e "EOF Reached\n";
+		#else
+			# While the current line in next_urls file is not equal to EOF
+			wget $i -O temp && sed "s/$mod_string/$mod_string-used/g";
+			# Parse next urls from temp file
+			next_url;
+			# Parse source urls from temp file
+			source_url;
+			reset
 		fi
 	done
 }; final_next_parser;
