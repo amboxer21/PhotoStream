@@ -5,7 +5,7 @@
 	fi
 
 	# Zero out all files relevant to final next url parser.
-	for i in `echo "next_urls source_urls temp albums albums~ Album_Names Album_Names~ Album_ID_list Album_ID_list~ Photostream_photos Photostream_photos~"`; do 
+	for i in `echo "next_urls source_urls temp"`; do 
 		echo > $i;
 	done
 
@@ -51,7 +51,7 @@ function next_url() {
 }; next_url;
     
 function source_parser() {
-        cat temp | egrep --color -o "source\":\"[A-Za-z0-9.:\/_-]*_n.jpg\?\_[A-Za-z0-9&=_]*" | sed 's/\(source\":\"\)//g' | awk '{gsub(/\\/,""); print}';
+        cat temp | egrep --color -o "source\":\"[A-Za-z0-9.:\/_-]*_n.jpg" | sed 's/\(source\":\"\)//g' | awk '{gsub(/\\/,""); print}';
 };  
     
 # Source urls
@@ -71,6 +71,7 @@ function final_next_parser() {
 		mod_string=$(echo $i | awk '{gsub(/\//, "\\/"); print}')
 
 		if [[ ! $mod_string == `echo $mod_string | egrep "http.*\-used"` ]]; then 
+
 			# While the current line in next_urls file is not equal to EOF
 			wget $i -O temp && sed -i "s/$mod_string/$mod_string-used/g" next_urls;
 			# Parse next urls from temp file
@@ -78,8 +79,9 @@ function final_next_parser() {
 			# Parse source urls from temp file
 			source_url;
 			#reset
-		elif [[ $mod_string == `echo $mod_string | egrep "http.*\-used"` ]]; then
-			sed -i "s/$mod_string//g" next_urls;	
+		#elif [[ $mod_string == `echo $mod_string | egrep "http.*\-used"` ]]; then
+		#	sed -i "s/$mod_string//g" next_urls;	
 		fi
+	return;
 	done
 }; final_next_parser;
