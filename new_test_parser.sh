@@ -51,7 +51,7 @@ function next_url() {
 }; next_url;
     
 function source_parser() {
-        cat temp | egrep --color -o "source\":\"[A-Za-z0-9.:\/_-]*_n.jpg" | sed 's/\(source\":\"\)//g' | awk '{gsub(/\\/,""); print}';
+        cat temp | egrep --color -o "source\":\"[A-Za-z0-9.:\/_-]*_n.jpg\?\_[A-Za-z0-9_]*=[A-Za-z0-9&_]*=[A-Za-z0-9&_]*=[A-Za-z0-9]*" | sed 's/\(source\":\"\)//g' | awk '{gsub(/\\/,""); print}';
 };  
     
 # Source urls
@@ -82,6 +82,5 @@ function final_next_parser() {
 		#elif [[ $mod_string == `echo $mod_string | egrep "http.*\-used"` ]]; then
 		#	sed -i "s/$mod_string//g" next_urls;	
 		fi
-	return;
 	done
 }; final_next_parser;
