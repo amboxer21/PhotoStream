@@ -78,9 +78,6 @@ function final_next_parser() {
 			next_url;
 			# Parse source urls from temp file
 			source_url;
-			#reset
-		#elif [[ $mod_string == `echo $mod_string | egrep "http.*\-used"` ]]; then
-		#	sed -i "s/$mod_string//g" next_urls;	
 		fi
 	done
 }; final_next_parser;
