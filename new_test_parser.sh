@@ -51,12 +51,8 @@ function next_url() {
 }; next_url;
     
 function source_parser() {
-<<<<<<< HEAD
         urls=$(cat temp | egrep --color -o "source\":\"[A-Za-z0-9.:\/_-]*_n.jpg" | sed 's/\(source\":\"\)//g' | awk '{gsub(/\\/,""); print}');
         echo -e "$urls" | egrep "http.*\/p480x480\/[0-9_]*n.jpg" > temp_new_urls > temp;
-=======
-        cat temp | egrep --color -o "source\":\"[A-Za-z0-9.:\/_-]*_n.jpg\?\_[A-Za-z0-9_]*=[A-Za-z0-9&_]*=[A-Za-z0-9&_]*=[A-Za-z0-9]*" | sed 's/\(source\":\"\)//g' | awk '{gsub(/\\/,""); print}';
->>>>>>> a7cad56dc9aaeb63a14c6c2bd9235b22b7f516b5
 };  
     
 # Source urls
