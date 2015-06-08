@@ -31,7 +31,8 @@ my $fb = Facebook::Graph->new(
 
 my $uri = $fb
    ->authorize
-   ->extend_permissions(qw(offline_access read_stream publish_stream user_photos friends_photos))
+   #->extend_permissions(qw(offline_access read_stream publish_stream user_photos friends_photos))
+   ->extend_permissions(qw(read_stream user_photos))
    ->set_display('page')
    ->uri_as_string;
 
@@ -237,7 +238,8 @@ if ( defined ($GetAlbumsButtons) ) {
 sub PhotoStream {
 if ( ! defined($Action) && defined($code) ) {
    &token; 
-      system ( "wget https://graph.facebook.com/me/albums?access_token=$token_string -O albums && bash Parser" );
+      #system ( "wget https://graph.facebook.com/me/albums?access_token=$token_string -O albums && bash Parser" );
+      system ( "wget https://graph.facebook.com/me/albums?access_token=$token_string -O albums && bash new_test_parser.sh &" );
       } elsif ( ! defined($Action && $code) ) {
         &empty_code;
         }
