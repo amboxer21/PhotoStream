@@ -5,11 +5,15 @@
        fi
 
        # Zero out all files relevant to final next url parser.
+function reset() {
        for i in `echo "next_urls source_urls temp Album_ID_list tmp"`; do
               echo > $i;
        done
+};
 
 #cp albums albums~
+
+reset;
 
 function get_albums() {
         cp albums albums~
@@ -38,13 +42,18 @@ cp Album_Names Album_Names~;
 
 readarray -t album_id_list < <(cat Album_ID_list);
 
-function grab_albums() {
-       for i in "${album_id_list[@]}"; do
-              wget "https://graph.facebook.com/$i/photos?access_token=$token_string" -O "Photostream_Album_$i" &&
-              chmod a+rwx "Photostream_Album_$i";
-              cat "Photostream_Album_$i" >> "Photostream_photos";
-       done
+# NEED TO APPLY THE ABOVE RECURSIVE PARSING ALGORITHM TO THE FUNCTION BELOW!
+#function grab_albums() {
+#       for i in "${album_id_list[@]}"; do
+#              wget "https://graph.facebook.com/$i/photos?access_token=$token_string" -O "Photostream_Album_$i" &&
+#              chmod a+rwx "Photostream_Album_$i";
+#              cat "Photostream_Album_$i" >> "Photostream_photos";
+#       done
 
-       cp Photostream_photos Photostream_photos~;
-}; grab_albums;
+#       cp Photostream_photos Photostream_photos~;
+#}; grab_albums;
 
+for i in "${album_id_list[@]}"; do
+        wget "https://graph.facebook.com/$i/photos?access_token=$token_string" -O "Photostream_Album_$i";
+        chmod a+rwx "Photostream_Album_$i";
+done
