@@ -54,6 +54,7 @@ function grab_albums() {
 echo -e "Entering function grab_albums\n";
        for i in "${album_id_list[@]}"; do
               wget "https://graph.facebook.com/$i/photos?access_token=$token_string" -O "Photostream_Album_$i" &&
+              echo $token_string > token_string;
               chmod a+rwx "Photostream_Album_$i";
               cat "Photostream_Album_$i" >> "Photostream_photos";
        done
@@ -73,17 +74,72 @@ echo -e "copy Photostream_photos~ to temp\n";
 #for i in Photostream_photos~; do
 #       test_album=$i
 #       cp $test_album Photostream_photos~
-       cp Photostream_photos Photostream_photos~;
+
 echo -e "copying Photostream_photos to Photostream_photos~";
+cp Photostream_photos Photostream_photos~;
        function get_photos() {
-       echo -e "Entering function get_photos\n";
+              echo -e "Entering function get_photos\n";
               sed -i 's/},{/\n},{\n/g;s/"\n/",/g;s/,/,\n/g;s/\("created_time\)/\1/g;s/}}$/\n/g' Photostream_photos~
-              #cat Photostream_photos~ | egrep -i "\"(next|previous).*$|\"id.*$" | sed 's/^\"id":"\|",$\|\\//g;s/"}],\|"$//g;s/"next":"/next:/g;s/"previous":"/previous:/g' > Photo_ID_list;
               cat Photostream_photos~ | egrep "^\"source" | sed 's/\"\|,\|\\//g;s/source://g' | egrep -v "[a-z0-9\.\-]*\/[a-z][0-9]*x[0-9]*" >> source_urls;
               cat Photostream_photos~ | egrep "^\"next" | sed 's/\"\|,\|\\//g;s/next://g' | egrep -v "[a-z0-9\.\-]*\/[a-z][0-9]*x[0-9]*" >> next_urls;
-              cat Photo_url >> tmp;
+              sed -i 's/\/photos?access_token=/?fields=photos{source}\&access_token=/g;s/}}.*$//g' next_urls
        }; get_photos;
+
+<<begin
+cp albums albums~
+function get_albums() {
+        echo -e "Entering function.\n";
+        sed -i 's/},{/\n},{\n/g;s/"\n/",/g;s/,/,\n/g;s/\("created_time\)/\1/g;s/}}$/\n/g' albums~;
+        cat albums~ | egrep -i "\"(next|previous).*$|\"id.*$" | sed 's/^\"id":"\|",$\|\\//g;s/"}],\|"$//g;s/"next":"/next:/g;s/"previous":"/previous:/g' > Album_ID_list;
+        cat Album_ID_list >> tmp;
+}; get_albums;
+
+echo -e "Left function.\n";
+
+final=0;
+while [[ ! $final == 1 ]]; do
+        echo -e "Entering loop.\n";
+        if [[ ! `cat Album_ID_list | egrep -o next` && ! `cat Album_ID_list | egrep -o previous` ]]; then
+              cat tmp > Album_ID_list;
+              final=1;
+        elif [[ `cat Album_ID_list | egrep -o next` ]]; then
+              echo -e "Next link found.\n";
+              wget `cat Album_ID_list | egrep "^next.*$" | sed 's/next://g'` -O albums~ && get_albums;
+        elif [[ `cat Album_ID_list | egrep -o previous` && ! `cat Album_ID_list | egrep -o next` ]]; then
+              echo > Album_ID_list && echo -e "`cat tmp | sed 's/^[previous|next].*$//g;/^$/d'`" >> Album_ID_list;
+              final=1;
+        fi
+done
+begin
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 echo -e "Leaving function get_photos\n";
+
+
+
 
 <<COMMENT
        final=0; 
@@ -116,6 +172,8 @@ https://graph.facebook.com/v2.4/205920726246194?fields=photos{source}&access_tok
 The you can get the next source and next urls:
 https://scontent.xx.fbcdn.net/hphotos-xtp1/v/t1.0-9/1395296_203857659785834_2116670839_n.jpg?oh=a08bbb5f9d4e525d61f17a0f3b68d168&oe=56792ADE
 the link without the pXXXxXXX is the one we need
+
+this will play the above changes -> sed 's/\/photos?access_token=/?fields=photos{source}&access_token=/g' next_urls
 
 NEED TP APPLY RECURSION HERE AT THIS POINT
 
