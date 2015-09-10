@@ -83,19 +83,19 @@ cp Photostream_photos Photostream_photos~;
               cat Photostream_photos~ | egrep "^\"source" | sed 's/\"\|,\|\\//g;s/source://g' | egrep -v "[a-z0-9\.\-]*\/[a-z][0-9]*x[0-9]*" >> source_urls;
               cat Photostream_photos~ | egrep "^\"next" | sed 's/\"\|,\|\\//g;s/next://g' | egrep -v "[a-z0-9\.\-]*\/[a-z][0-9]*x[0-9]*" >> next_urls;
               sed -i 's/\/photos?access_token=/?fields=photos{source}\&access_token=/g;s/}}.*$//g' next_urls
+              #cat next_urls >> Photostream_photos~;
        }; get_photos;
 
+final=0
+while [[ ! $final == 1 ]]; do
+       for i in `cat next_urls`; do
+              wget "$i" -O Photostream_photos~ && cat Photostream_photos~ >> tmp_urls;
+              echo -e "Exiting last loop\n";
+       done
+       final=1;
+done
+
 <<begin
-cp albums albums~
-function get_albums() {
-        echo -e "Entering function.\n";
-        sed -i 's/},{/\n},{\n/g;s/"\n/",/g;s/,/,\n/g;s/\("created_time\)/\1/g;s/}}$/\n/g' albums~;
-        cat albums~ | egrep -i "\"(next|previous).*$|\"id.*$" | sed 's/^\"id":"\|",$\|\\//g;s/"}],\|"$//g;s/"next":"/next:/g;s/"previous":"/previous:/g' > Album_ID_list;
-        cat Album_ID_list >> tmp;
-}; get_albums;
-
-echo -e "Left function.\n";
-
 final=0;
 while [[ ! $final == 1 ]]; do
         echo -e "Entering loop.\n";
