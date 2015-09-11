@@ -67,32 +67,32 @@ echo -e "Leaving function grab_albums\n";
 reset;
 echo -e "resetting\n";
 
-cat Photostream_photos~ > temp;
 echo -e "copy Photostream_photos~ to temp\n";
-
-#for i in `ls | egrep -i "Photostream_Album_[0-9]*$"`; do
-#for i in Photostream_photos~; do
-#       test_album=$i
-#       cp $test_album Photostream_photos~
+cat Photostream_photos~ > temp;
 
 echo -e "copying Photostream_photos to Photostream_photos~";
 cp Photostream_photos Photostream_photos~;
-       function get_photos() {
-              echo -e "Entering function get_photos\n";
-              sed -i 's/},{/\n},{\n/g;s/"\n/",/g;s/,/,\n/g;s/\("created_time\)/\1/g;s/}}$/\n/g' Photostream_photos~
-              cat Photostream_photos~ | egrep "^\"source" | sed 's/\"\|,\|\\//g;s/source://g' | egrep -v "[a-z0-9\.\-]*\/[a-z][0-9]*x[0-9]*" >> source_urls;
-              cat Photostream_photos~ | egrep "^\"next" | sed 's/\"\|,\|\\//g;s/next://g' | egrep -v "[a-z0-9\.\-]*\/[a-z][0-9]*x[0-9]*" >> next_urls;
-              sed -i 's/\/photos?access_token=/?fields=photos{source}\&access_token=/g;s/}}.*$//g' next_urls
-              #cat next_urls >> Photostream_photos~;
-       }; get_photos;
+
+function get_photos() {
+       echo -e "Entering function get_photos\n";
+       sed -i 's/},{/\n},{\n/g;s/"\n/",/g;s/,/,\n/g;s/\("created_time\)/\1/g;s/}}$/\n/g' Photostream_photos~
+       #cat Photostream_photos~ | egrep "^\"source" | sed 's/\"\|,\|\\//g;s/source://g' | egrep -v "[a-z0-9\.\-]*\/[a-z][0-9]*x[0-9]*" > source_urls;
+       cat Photostream_photos~ | egrep "^\"source" | sed 's/\"\|,\|\\//g;s/source://g' | egrep -o "^https.*[a-z]720[a-z]720.*$" > source_urls;
+       cat Photostream_photos~ | egrep "^\"next" | sed 's/\"\|,\|\\//g;s/next://g;s/}}//g;s/{data.*$//g' | egrep -v "http.*comments.*$" > next_urls;
+       #sed -i 's/\/photos?access_token=/?fields=photos{source}\&access_token=/g' next_urls
+       #cat next_urls >> Photostream_photos~;
+}; get_photos;
 
 final=0
 while [[ ! $final == 1 ]]; do
        for i in `cat next_urls`; do
-              wget "$i" -O Photostream_photos~ && cat Photostream_photos~ >> tmp_urls;
-              echo -e "Exiting last loop\n";
+              wget "$i" -O Photostream_photos~ && sleep 1 && cat Photostream_photos~ >> tmp_urls;
+              #get_photos;
+              echo -e "Final = $final.\n";
+              echo -e "Exiting last loop.\n";
        done
        final=1;
+       echo -e "Final = $final.\n";
 done
 
 <<begin
