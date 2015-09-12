@@ -6,7 +6,7 @@
 
        # Zero out all files relevant to final next url parser.
 function reset() {
-       for i in `echo "next_urls source_urls temp Album_ID_list Photo_ID_list tmp Photo_url"`; do
+       for i in `echo "next_urls source_urls temp Album_ID_list Photo_ID_list tmp Photo_url tmp_urls"`; do
               echo > $i;
        done
 };
@@ -21,19 +21,26 @@ function get_albums() {
         # Parses album IDs and next/previous url
         cat albums~ | egrep -i "\"(next|previous).*$|\"id.*$" | sed 's/^\"id":"\|",$\|\\//g;s/"}],\|"$//g;s/"next":"/next:/g;s/"previous":"/previous:/g' > Album_ID_list;
         cat Album_ID_list >> tmp;
+        #cat tmp && sleep 10; # <- DEBUG 
 }; get_albums;
 
-echo -e "Left function.\n";
+echo -e "Left function get_albums.\n";
 
-final=0;
+final=0; # Initialize final. Set it to zero.
 while [[ ! $final == 1 ]]; do
         echo -e "Entering loop.\n";
+        # If next and previous links are not present then just push the tmp file from above into the Album_ID_list file
+        # and break the loop by setting final to 1.
         if [[ ! `cat Album_ID_list | egrep -o next` && ! `cat Album_ID_list | egrep -o previous` ]]; then
 		cat tmp > Album_ID_list;
 		final=1;
+        # If next link is found inside of the Album_ID_parser then wget it and save it to the albums~ file. 
+        # This is important because it is the entry point to our recursion algorithm. Then it calls the get_albums() function once again.
         elif [[ `cat Album_ID_list | egrep -o next` ]]; then
               echo -e "Next link found.\n";
               wget `cat Album_ID_list | egrep "^next.*$" | sed 's/next://g'` -O albums~ && get_albums;
+        # This statement checks if any previous links are present and whether next links are absent. If this statement evaluates as true then  
+        # that means that this is the end of the JSON linking and there are no more objects to be grabbed or handed.
         elif [[ `cat Album_ID_list | egrep -o previous` && ! `cat Album_ID_list | egrep -o next` ]]; then
               echo > Album_ID_list && echo -e "`cat tmp | sed 's/^[previous|next].*$//g;/^$/d'`" >> Album_ID_list;
               final=1;
@@ -78,18 +85,22 @@ function get_photos() {
        sed -i 's/},{/\n},{\n/g;s/"\n/",/g;s/,/,\n/g;s/\("created_time\)/\1/g;s/}}$/\n/g' Photostream_photos~
        #cat Photostream_photos~ | egrep "^\"source" | sed 's/\"\|,\|\\//g;s/source://g' | egrep -v "[a-z0-9\.\-]*\/[a-z][0-9]*x[0-9]*" > source_urls;
        cat Photostream_photos~ | egrep "^\"source" | sed 's/\"\|,\|\\//g;s/source://g' | egrep -o "^https.*[a-z]720[a-z]720.*$" > source_urls;
-       cat Photostream_photos~ | egrep "^\"next" | sed 's/\"\|,\|\\//g;s/next://g;s/}}//g;s/{data.*$//g' | egrep -v "http.*comments.*$" > next_urls;
+       ##cat Photostream_photos~ | egrep "^\"next" | sed 's/\"\|,\|\\//g;s/next://g;s/}}//g;s/{data.*$//g' > next_urls; ## DO NOT DELETE!!!
+       cat Photostream_photos~ | egrep "^\"(next|previous)" | sed 's/\"\|,\|\\//g;s/}}//g;s/{data.*$//g' > next_urls;
        #sed -i 's/\/photos?access_token=/?fields=photos{source}\&access_token=/g' next_urls
        #cat next_urls >> Photostream_photos~;
 }; get_photos;
 
 final=0
 while [[ ! $final == 1 ]]; do
-       for i in `cat next_urls`; do
-              wget "$i" -O Photostream_photos~ && sleep 1 && cat Photostream_photos~ >> tmp_urls;
+       for i in `cat next_urls | sed 's/\/photos?access_token=/?fields=photos{source}\&access_token=/g'`; do
+              ##wget "$i" -O Photostream_photos~ && sleep 1 && cat Photostream_photos~ >> tmp_urls; # DO NOT DELETE!!
+              #if [[ `wget -S --spider $(echo $i | egrep "next.*$" | sed 's/next://g') -O Photostream_photos~ && cat Photostream_photos~ >> tmp_urls 2>&1 | grep 'HTTP/1.1 200 OK'` ]]; then 
+              wget `echo $i | egrep "next.*$" | sed 's/next://g'` -O Photostream_photos~ && cat Photostream_photos~ >> tmp_urls; 
+                     echo -e "Downloading ${i}\n";
+                     sleep 1;
+              #fi
               #get_photos;
-              echo -e "Final = $final.\n";
-              echo -e "Exiting last loop.\n";
        done
        final=1;
        echo -e "Final = $final.\n";
