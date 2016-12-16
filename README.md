@@ -1,3 +1,6 @@
+The recursive parsing algorithm is the last step in finishing this!
+
+
 PhotoStream
 ===========
 
